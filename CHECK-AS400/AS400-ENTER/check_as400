@@ -1,0 +1,11 @@
+#!/bin/bash
+libexecdir="/usr/local/nagios/libexec"
+creddir="/usr/local/nagios/creds"
+decrypt=".as400cred"
+myhostname=$1
+
+openssl des3 -d -salt -in ${creddir}/${decrypt}-${myhostname}.encrypted -out ${creddir}/${decrypt}-${myhostname} -k abc123
+USER=`cat ${creddir}/${decrypt}-${myhostname} | cut -d':' -f1`
+PASS=`cat ${creddir}/${decrypt}-${myhostname} | cut -d':' -f2`
+#/bin/java -cp ${libexecdir} check_as400 -u $USER -p $PASS ${@:2}
+/bin/java -cp /usr/local/nagios/libexec/AS400-ENTER check_as400 -u $USER -p $PASS ${@:2}
