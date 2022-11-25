@@ -1,12 +1,16 @@
 **1. Install JAVA**
 
+```
 dnf install -y java-1.8.0-openjdk
+```
 
 
 **2. Install check_as400 plugin**
 
+```
 cd check_as400-master
 ./install.sh
+```
 
 ----------------------------------------------------------------------------------------
 ```
@@ -32,46 +36,57 @@ into your /etc/checkcommands.cfg
 ```
 ----------------------------------------------------------------------------------------
 
-Modify /usr/local/nagios/libexec/.as400 with the correct user and password
+Modify `/usr/local/nagios/libexec/.as400` with the correct user and password
 
 
 **3. Add commands into Nagios**
 
+```
 cd ../config
 cp commands.cfg /usr/local/nagios/etc/import/
 /usr/local/nagiosxi/scripts/reconfigure_nagios.sh
+```
 
 
 **4. Add hosts into Nagios**
 
+```
 cd hosts
 cp *.cfg /usr/local/nagios/etc/import/
 /usr/local/nagiosxi/scripts/reconfigure_nagios.sh
 cd ..
+```
 
 
 **5. Add services into Nagios**
 
+```
 cd services
 cp *.cfg /usr/local/nagios/etc/import/
 /usr/local/nagiosxi/scripts/reconfigure_nagios.sh
 cd ..
+```
 
 
 **DONE!**
 
 
-**NOTE: If the console requires ENTER to be pressed after login, use customized check_as400**
+
+**NOTE:** If the console requires ENTER to be pressed after login, use customized check_as400
+
 **Perform as below:**
 
 **1. Copy the AS400-ENTER directory to /usr/local/nagios/libexec**
+
 **[Assuming you are at tm-bmmb/CHECK-AS400 directory]**
 
+```
 cp -R AS400-ENTER /usr/local/nagios/libexec/
 chmod -R g-s /usr/local/nagios/libexec/AS400-ENTER
 chown -R nagios.nagios /usr/local/nagios/libexec/AS400-ENTER
+```
 
-Then, make sure to change the commands to use $USER1$/AS400-ENTER/check_as400
+Then, make sure to change the commands to use `$USER1$/AS400-ENTER/check_as400`
 
 **DONE!**
 
