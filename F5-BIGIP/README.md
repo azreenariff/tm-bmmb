@@ -8,7 +8,7 @@ autoreconf
 ./configure
 make
 cp plugins-scripts/check_nwc_health /usr/local/nagios/libexec
-chown nagios.nagios /usr/local/nagios/libexec/check_nwc_health
+chown apache.nagios /usr/local/nagios/libexec/check_nwc_health
 cpan File::Slurp
 cpan JSON::XS
 cd ..
@@ -31,7 +31,7 @@ cd plugins
 cp check_bigip_pool_204 /usr/local/nagios/libexec/check_bigip_pool
 cp check_bigip_vs_203 /usr/local/nagios/libexec/check_bigip_vs
 chmod 755 /usr/local/nagios/libexec/check_bigip*
-chown nagios.nagios /usr/local/nagios/libexec/check_bigip*
+chown apache.nagios /usr/local/nagios/libexec/check_bigip*
 cd ..
 ```
 
