@@ -1,14 +1,15 @@
-1. Install JAVA
+**1. Install JAVA**
 
 dnf install -y java-1.8.0-openjdk
 
 
-2. Install check_as400 plugin
+**2. Install check_as400 plugin**
 
 cd check_as400-master
 ./install.sh
 
 ----------------------------------------------------------------------------------------
+```
 Nagios Check_AS400 Plugin Installation Script
 
 Please type the full path to nagios directory (ex. /usr/local/nagios): /usr/local/nagios
@@ -28,19 +29,20 @@ Install Complete!
 
 Also add the contents of the checkcommands.example file
 into your /etc/checkcommands.cfg
+```
 ----------------------------------------------------------------------------------------
 
 Modify /usr/local/nagios/libexec/.as400 with the correct user and password
 
 
-3. Add commands into Nagios
+**3. Add commands into Nagios**
 
 cd ../config
 cp commands.cfg /usr/local/nagios/etc/import/
 /usr/local/nagiosxi/scripts/reconfigure_nagios.sh
 
 
-4. Add hosts into Nagios
+**4. Add hosts into Nagios**
 
 cd hosts
 cp *.cfg /usr/local/nagios/etc/import/
@@ -48,7 +50,7 @@ cp *.cfg /usr/local/nagios/etc/import/
 cd ..
 
 
-5. Add services into Nagios
+**5. Add services into Nagios**
 
 cd services
 cp *.cfg /usr/local/nagios/etc/import/
@@ -56,5 +58,6 @@ cp *.cfg /usr/local/nagios/etc/import/
 cd ..
 
 
-DONE!
+**DONE!**
+
 
