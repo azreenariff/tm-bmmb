@@ -25,7 +25,7 @@
 use strict;
 use warnings;
 use vars qw($PROGNAME $VERSION $WARNING $CRITICAL $snmpcmd $snmpwalkcmd %bip);
-use Nagios::Plugin;
+use Nagios::Monitoring::Plugin;
 
 $PROGNAME = 'check_bigip_pool';
 $VERSION = '2.01';
@@ -48,7 +48,7 @@ $snmpwalkcmd = '/usr/bin/snmpwalk';
 );
 
 
-my $np = Nagios::Plugin->new(
+my $np = Nagios::Monitoring::Plugin->new(
   usage => "Usage: %s -H <hostname> -C <Community> -S <SW Version>\n"
     . '       -P <Pool Name> [ -w <warning percent> ] [ -c <critical percent> ]',
   version => $VERSION,

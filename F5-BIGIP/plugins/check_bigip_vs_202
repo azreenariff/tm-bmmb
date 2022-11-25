@@ -24,10 +24,10 @@
 use strict;
 use warnings;
 use vars qw($PROGNAME $VERSION $snmpcmd %bip);
-use Nagios::Plugin;
+use Nagios::Monitoring::Plugin;
 
 $PROGNAME = 'check_bigip_vs';
-$VERSION = '2.00';
+$VERSION = '2.02';
 $snmpcmd = '/usr/bin/snmpget';
 
 # BigIP config. For each bigip version, there is the base OID and possible
@@ -45,13 +45,22 @@ $snmpcmd = '/usr/bin/snmpget';
     'OID' => '.1.3.6.1.4.1.3375.2.2.10.1.2.1.22.',
     '0' => ['WARNING', 'Virtual Server is Disabled'],
     '1' => ['OK', 'Virtual Server is Up and available'],
-    '2' => ['CRITICAL', 'Virtual Server status is YELLOW(tm)'],
-    '3' => ['CRITICAL', 'Virtual Server status is RED(tm)'],
+    '2' => ['CRITICAL', 'Virtual Server is currently not available'],
+    '3' => ['CRITICAL', 'Virtual Server is not available'],
     '4' => ['WARNING', 'Virtual Server status is unknown']
+  },
+  '9.3' => {
+    'OID' => '.1.3.6.1.4.1.3375.2.2.10.13.2.1.2.',
+    '0' => ['CRITICAL', 'Error'],
+    '1' => ['OK', 'Virtual Server is Up and available'],
+    '2' => ['CRITICAL', 'Virtual Server is currently not available'],
+    '3' => ['CRITICAL', 'Virtual Server is not available'],
+    '4' => ['WARNING', 'Virtual Server status is unknown'],
+    '5' => ['CRITICAL', 'Unlicensed']
   }
 );
 
-my $np = Nagios::Plugin->new(
+my $np = Nagios::Monitoring::Plugin->new(
   usage => "Usage: %s -H <hostname> -C <Community> -S <SW Version>\n"
     . '       -I <VS Name/IP Address> [ -p <VS Port> ]',
   version => $VERSION,
@@ -78,7 +87,7 @@ $np->add_arg(
   help => "-S, --software=<SW Version> \n"
     . "   The BigIP software version running on the BigIP. This can be:\n"
     . "   4.5\tOlder BigIP models like the 5100 series.\n"
-    . "   9\tNewer BigIP LTM like the 6400 series.",
+    . "   9\tNewer BigIP LTM like the 6400 series.\n",
   required => 1,
 );
 
@@ -127,21 +136,48 @@ $np->nagios_exit('UNKNOWN', 'Community contains invalid characters.')
   if ($community =~ /\`|\~|\!|\$|\%|\^|\&|\*|\||\'|\"|\<|\>|\?|\,|\(|\)|\=/);
 
 
+# Just in case of problems, let's not hang Nagios
+alarm $np->opts->timeout;
+
+my $oid;
 # Get the complete OID for the Virtual Server status.
-my $oid = $bip{$software}{'OID'};
 if ($software eq '4.5') {
+  $oid = $bip{$software}{'OID'};
   $oid .= "$virtualServer.$virtualServerPort";
 }
+
 if ($software eq '9') {
+
+  # First get the exact version
+  my $vercmd = "$snmpcmd -v2c -c $community -m '' -On -Oe $hostname .1.3.6.1.4.1.3375.2.1.4.2.0";
+  if ($np->opts->verbose) {
+    print STDERR "Getting BigIP Version trough SNMP\n";
+    print STDERR "Running command: \"$vercmd\"\n" if ($np->opts->verbose >= 2);
+  } else {
+    $vercmd .= ' 2>/dev/null';
+  }
+  my $version=`$vercmd`;
+  print STDERR "Command returned: \"$version\"\n" if ($np->opts->verbose >= 3);
+  $np->nagios_exit('CRITICAL', 'Could not retrieve information from the BigIP') if ($? != 0);
+
+  my @version=split(/ /,$version);
+  $version=$version[3] if (defined($version[3]));
+
+  $version =~ m/(\d+)\.(\d+)\.\d+/;
+  print "Got major version $1, minor version $2\n" if ($np->opts->verbose);
+  if ($1 == 9 && $2 >= 3) {
+    $software = '9.3';
+  } elsif ($1 ne '9') {
+    $np->nagios_exit('CRITICAL', 'Unknown BigIP LTM version $version');
+  }
+
+  $oid = $bip{$software}{'OID'};
   my $vslength = length($virtualServer);
   $virtualServer =~ s/(.)/sprintf('.%u', ord($1))/eg;
   $oid .= $vslength . $virtualServer;
 }
 
-# Just in case of problems, let's not hang Nagios
-alarm $np->opts->timeout;
-
-my $cmd = "$snmpcmd -v2c -c $community -On -Oe $hostname $oid";
+my $cmd = "$snmpcmd -v2c -c $community -m '' -On -Oe $hostname $oid";
 
 if ($np->opts->verbose) {
   print STDERR "Getting 'virtualServerStatus' trough SNMP\n";
