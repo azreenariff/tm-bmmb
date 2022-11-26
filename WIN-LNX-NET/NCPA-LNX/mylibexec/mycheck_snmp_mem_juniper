@@ -1,0 +1,116 @@
+#!/bin/bash
+
+# Nagios Exit Codes
+OK=0
+WARNING=1
+CRITICAL=2
+UNKNOWN=3
+
+# set default values for the thresholds
+WARN=80
+CRIT=90
+
+usage()
+{
+cat <<EOF
+
+Check Vmware Memory Usage
+
+     Options:
+	-H         Hostname/IP Address
+	-C         Commuity String
+        -w         Warning threshold as percentage (def: 80)
+        -c         Critical threshold as percentage (def: 90)
+
+Sample Usage: $0 -H 10.1.1.1 -C public -w 80 -c 90
+EOF
+}
+
+
+while getopts "H:C:w:c:h" ARG;
+do
+        case $ARG in
+                H) MYHOST=$OPTARG
+                   ;;
+                C) MYSTR=$OPTARG
+                   ;;
+                w) WARN=$OPTARG
+                   ;;
+                c) CRIT=$OPTARG
+                   ;;
+                h) usage
+                   exit
+                   ;;
+        esac
+done
+
+# Check Memory Usage
+
+MYDIRFORTMP=/var/nagiosramdisk/tmp
+if [ -w "$MYDIRFORTMP" ]; then
+  MYOUTMP="$MYDIRFORTMP/$MYHOST-memcheckout"
+  MYOUTMPERR="$MYDIRFORTMP/$MYHOST-memcheckouterr"
+else
+  MYOUTMP="/tmp/$MYHOST-memcheckout"
+  MYOUTMPERR="/tmp/$MYHOST-memcheckouterr"
+fi
+
+memtest=`/bin/snmpwalk -v2c -On -c $MYSTR $MYHOST 1.3.6.1.4.1.3224.16.2.1.0 > $MYOUTMPERR`
+echo $memtest > /dev/null
+MYOKNOTERR=$( cat "$MYOUTMPERR" | grep "INTEGER" )
+MYRESULTERR=$( cat "$MYOUTMPERR" )
+if [ -z "$MYOKNOTERR" ]; then
+        RESULT="$MYRESULTERR"
+        echo "UNKNOWN: $RESULT"
+        rm -f $MYOUTMPERR
+        exit $UNKNOWN;
+fi
+
+#memfree=`/bin/snmpwalk -v2c -On -c $MYSTR $MYHOST 1.3.6.1.4.1.3224.16.2.2.0 | awk '{print $4}'`
+memtotal=`/bin/snmpwalk -v2c -On -c $MYSTR $MYHOST 1.3.6.1.4.1.3224.16.2.2.0 | awk '{print $4}'`
+
+#memtotal=`/bin/snmpwalk -v2c -On -c $MYSTR $MYHOST 1.3.6.1.4.1.3224.16.2.1.0 | awk '{print $4}'` 
+memfree=`/bin/snmpwalk -v2c -On -c $MYSTR $MYHOST 1.3.6.1.4.1.3224.16.2.1.0 | awk '{print $4}'` 
+
+memused=`awk -v viv=$memfree -v tov=$memtotal 'BEGIN{printf "%0.0f\n", tov-viv}'`
+
+memusageout=`awk -v vir=$memused -v tot=$memtotal 'BEGIN{printf "%0.0f\n", vir/tot*100}'`
+
+echo $memusageout 2> $MYOUTMPERR > $MYOUTMP
+
+memusage=`cat "$MYOUTMP"`
+
+# End Checking
+
+RESULT=$(echo "Memory Usage = $memusage% | 'mem usage'=$memusage%;$WARN;$CRIT;")
+
+MYOKNOT=$( cat "$MYOUTMP" )
+MYOKNOTERR=$( cat "$MYOUTMPERR" )
+MYRESULTERR=$( cat "$MYOUTMPERR" )
+if [ ! -z "$MYOKNOTERR" ]; then
+	RESULT="$MYRESULTERR"
+        echo "UNKNOWN: $RESULT"
+        rm -f $MYOUTMP $MYOUTMPERR
+        exit $UNKNOWN;
+fi
+MYRESULT=$( cat "$MYOUTMP" )
+if [ -z "$MYOKNOT" ]; then
+	RESULT="$MYRESULT"
+        echo "UNKNOWN: $RESULT"
+        rm -f $MYOUTMP $MYOUTMPERR
+        exit $UNKNOWN;
+fi
+if [ "$memusage" -gt $CRIT ]; then
+	echo "CRITICAL: $RESULT"
+        rm -f $MYOUTMP $MYOUTMPERR
+	exit $CRITICAL;
+elif [ "$memusage" -gt $WARN ]; then
+	echo "WARNING: $RESULT"
+        rm -f $MYOUTMP $MYOUTMPERR
+	exit $WARNING;
+else
+	echo "OK: $RESULT"
+        rm -f $MYOUTMP $MYOUTMPERR
+	exit $OK;
+fi
+

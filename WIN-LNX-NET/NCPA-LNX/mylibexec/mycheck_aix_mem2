@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# Nagios Exit Codes
+OK=0
+WARNING=1
+CRITICAL=2
+UNKNOWN=3
+
+# set default values for the thresholds
+WARN=80
+CRIT=90
+
+usage()
+{
+cat <<EOF
+
+Check AIX Disk Usage
+
+     Options:
+        -H         Hostname/IP Address
+        -w         Warning threshold as percentage (def: 80)
+        -c         Critical threshold as percentage (def: 90)
+        -d         Disk Mountpoint/Partition
+
+Sample Usage: $0 -H 10.1.1.1 -w 80 -c 90 -d /
+EOF
+}
+
+
+while getopts "H:w:c:d:h" ARG;
+do
+        case $ARG in
+                H) MYHOST=$OPTARG
+                   ;;
+                w) WARN=$OPTARG
+                   ;;
+                c) CRIT=$OPTARG
+                   ;;
+                d) MPT=$OPTARG
+                   ;;
+                h) usage
+                   exit
+                   ;;
+        esac
+done
+
+# Check AIX Disk Usage
+
+mydiskusage1=$( echo "/usr/local/nagios/libexec/check_nrpe -H ${MYHOST} -t 90 -c check_me -a 'check_disk3 -w ${WARN} -c ${CRIT} -d ${MPT}\$'" | /bin/bash - | sed 's/\$//g' )
+mydiskusage=$( echo ${mydiskusage1} | awk '{$1=$2=""; print $0}' )
+
+# End Checking
+
+RESULT=$(echo "${mydiskusage}")
+mydiskperc=$( echo $RESULT | awk '{print $3}' | cut -d= -f2 | tr -d '%' )
+#echo $RESULT
+
+if [ $mydiskperc -gt $CRIT ]; then
+        echo "CRITICAL: $RESULT"
+        exit $CRITICAL;
+elif [ $mydiskperc -gt $WARN ]; then
+        echo "WARNING: $RESULT"
+        exit $WARNING;
+else
+        echo "OK: $RESULT"
+        exit $OK;
+fi

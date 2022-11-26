@@ -1,0 +1,7 @@
+To check interface status of only some multiple interfaces:
+
+/usr/local/nagios/libexec/check_nwc_health --hostname 192.168.0.190 --mode interface-status --community abc123 --warning --critical --regexp --name 'GigabitEthernet0/(0|1|2)|null0' --verbose
+
+/usr/local/nagios/libexec/check_nwc_health --hostname 192.168.0.190 --mode interface-usage --community abc123 --warning --critical --regexp --name 'GigabitEthernet0/(0|1|2)|null0' --verbose
+
+

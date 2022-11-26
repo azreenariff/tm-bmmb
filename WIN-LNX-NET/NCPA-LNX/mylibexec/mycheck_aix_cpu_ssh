@@ -1,0 +1,92 @@
+#!/bin/bash
+
+# Nagios Exit Codes
+OK=0
+WARNING=1
+CRITICAL=2
+UNKNOWN=3
+
+# set default values for the thresholds
+WARN=80
+CRIT=90
+
+usage()
+{
+cat <<EOF
+
+Check AIX CPU Usage
+
+     Options:
+	-H         Hostname/IP Address
+        -w         Warning threshold as percentage (def: 80)
+        -c         Critical threshold as percentage (def: 90)
+
+Sample Usage: $0 -H 10.1.1.1 -w 80 -c 90
+EOF
+}
+
+
+while getopts "H:w:c:h" ARG;
+do
+        case $ARG in
+                H) MYHOST=$OPTARG
+                   ;;
+                w) WARN=$OPTARG
+                   ;;
+                c) CRIT=$OPTARG
+                   ;;
+                h) usage
+                   exit
+                   ;;
+        esac
+done
+
+# Check CPU Usage
+
+MYDIRFORTMP=/var/nagiosramdisk/tmp
+if [ -w "$MYDIRFORTMP" ]; then
+  MYOUTMP="$MYDIRFORTMP/$MYHOST-cpucheckout"
+  MYOUTMPERR="$MYDIRFORTMP/$MYHOST-cpucheckouterr"
+else
+  MYOUTMP="/tmp/$MYHOST-cpucheckout"
+  MYOUTMPERR="/tmp/$MYHOST-cpucheckouterr"
+fi
+
+cpuusageout=`/usr/local/nagios/libexec/check_by_ssh -H $MYHOST -o StrictHostKeyChecking=no -C '/home/nagios/libexec/check_aix_cpu.pl -w 80 -c 90' -t 30 -l nagios -E`
+echo $cpuusageout 2> $MYOUTMPERR > $MYOUTMP
+
+cpuusage=`cat "$MYOUTMP" | awk '{print $6}' | tr -d '%' | awk '{printf "%0.0f\n", $1}'`
+
+cpucore=`cat "$MYOUTMP" | awk '{print $7}'`
+
+# End Checking
+
+RESULT=$(echo "CPU Usage = $cpuusage%. $cpucore CPU | 'cpu usage'=$cpuusage%;$WARN;$CRIT;")
+
+MYOKNOT=$( cat "$MYOUTMP" | grep "CPU" )
+MYOKNOTERR=$( cat "$MYOUTMPERR" )
+MYRESULTERR=$( cat "$MYOUTMPERR" )
+if [ ! -z "$MYOKNOTERR" ]; then
+	RESULT="$MYRESULTERR"
+        echo "$RESULT"
+        rm -f $MYOUTMPERR
+        exit $UNKNOWN;
+fi
+MYRESULT=$( cat "$MYOUTMP" )
+if [ -z "$MYOKNOT" ]; then
+	RESULT="$MYRESULT"
+        echo "$RESULT"
+        rm -f $MYOUTMP
+        exit $UNKNOWN;
+fi
+if [ "$cpuusage" -ge $CRIT ]; then
+	echo "CRITICAL: $RESULT"
+	exit $CRITICAL;
+elif [ "$cpuusage" -ge $WARN ]; then
+	echo "WARNING: $RESULT"
+	exit $WARNING;
+else
+	echo "OK: $RESULT"
+	exit $OK;
+fi
+

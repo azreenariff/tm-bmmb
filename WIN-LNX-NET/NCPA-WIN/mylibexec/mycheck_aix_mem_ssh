@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# Nagios Exit Codes
+OK=0
+WARNING=1
+CRITICAL=2
+UNKNOWN=3
+
+# set default values for the thresholds
+WARN=80
+CRIT=90
+
+usage()
+{
+cat <<EOF
+
+Check AIX Memory Usage
+
+     Options:
+        -H         Hostname/IP Address
+        -w         Warning threshold as percentage (def: 80)
+        -c         Critical threshold as percentage (def: 90)
+        -d         Memory Mountpoint/Partition
+
+Sample Usage: $0 -H 10.1.1.1 -w 80 -c 90 -d /
+EOF
+}
+
+
+while getopts "H:w:c:d:h" ARG;
+do
+        case $ARG in
+                H) MYHOST=$OPTARG
+                   ;;
+                w) WARN=$OPTARG
+                   ;;
+                c) CRIT=$OPTARG
+                   ;;
+                d) MPT=$OPTARG
+                   ;;
+                h) usage
+                   exit
+                   ;;
+        esac
+done
+
+# Check AIX Memory Usage
+
+#mymemusage1=$( echo "/usr/local/nagios/libexec/check_by_ssh -H ${MYHOST} -o StrictHostKeyChecking=no -C 'check_mem3 -w ${WARN} -c ${CRIT} -d ${MPT}\$' -t 30 -l nagios -E" | /bin/bash - | sed 's/\$//g' )
+mymemusage1=$( echo "/usr/local/nagios/libexec/check_by_ssh -H ${MYHOST} -o StrictHostKeyChecking=no -C '/home/nagios/libexec/mycheck_aix_mem -w ${WARN} -c ${CRIT}' -t 30 -l nagios -E" )
+mymemusage=$( echo ${mymemusage1} | awk '{$1=$2=""; print $0}' )
+
+# End Checking
+
+RESULT=$(echo "${mymemusage}")
+mymemperc=$( echo $RESULT | awk '{print $3}' | cut -d= -f2 | tr -d '%' )
+#echo $RESULT
+
+if [ $mymemperc -gt $CRIT ]; then
+        echo "CRITICAL: $RESULT"
+        exit $CRITICAL;
+elif [ $mymemperc -gt $WARN ]; then
+        echo "WARNING: $RESULT"
+        exit $WARNING;
+else
+        echo "OK: $RESULT"
+        exit $OK;
+fi

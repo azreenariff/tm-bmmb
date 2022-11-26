@@ -1,0 +1,70 @@
+
+#!/bin/sh
+
+# Nagios Exit Codes
+OK=0
+WARNING=1
+CRITICAL=2
+UNKNOWN=3
+
+# set default values for the thresholds
+WARN=80
+CRIT=90
+
+usage()
+{
+cat <<EOF
+
+Check AIX Memory Usage
+
+     Options:
+        -w         Warning threshold as MB (def: 150)
+        -c         Critical threshold as MB (def: 120)
+
+Sample Usage: $0 -w 80 -c 90
+EOF
+}
+
+
+while getopts "w:c:h" ARG;
+do
+        case $ARG in
+                w) WARN=$OPTARG
+                   ;;
+                c) CRIT=$OPTARG
+                   ;;
+                h) usage
+                   exit
+                   ;;
+        esac
+done
+
+# Check Memory Usage
+
+mymemtotal=`svmon -G | head -2 | tail -1 | awk '{ print $2 }'`
+mymemtotal=`expr $mymemtotal / 256`
+
+mymemvirtual=`svmon -G | head -2 | tail -1 | awk '{ print $6 }'`
+mymemvirtual=`expr $mymemvirtual / 256`
+
+mymemused=`svmon -G | head -2 | tail -1 | awk '{ print $3 }'`
+mymemused=`expr $mymemused / 256`
+
+#mymemusedperc=`awk -v vir=$mymemvirtual -v tot=$mymemtotal 'BEGIN{printf "%0.0f\n", vir/tot*100}'`
+mymemusedperc=`awk -v vir=$mymemused -v tot=$mymemtotal 'BEGIN{printf "%0.0f\n", vir/tot*100}'`
+
+# End Checking
+
+RESULT=$(echo "Memory Usage = $mymemusedperc% of $mymemtotal MB | 'memory usage'=$mymemusedperc%;$WARN;$CRIT;")
+
+if [ $mymemusedperc -gt $CRIT ]; then
+        echo "CRITICAL: $RESULT"
+        exit $CRITICAL;
+elif [ $mymemusedperc -gt $WARN ]; then
+        echo "WARNING: $RESULT"
+        exit $WARNING;
+else
+        echo "OK: $RESULT"
+        exit $OK;
+fi
+

@@ -1,0 +1,118 @@
+#!/bin/bash
+
+# Nagios Exit Codes
+OK=0
+WARNING=1
+CRITICAL=2
+UNKNOWN=3
+
+# set default values for the thresholds
+WARN=80
+CRIT=90
+
+usage()
+{
+cat <<EOF
+
+Check Vmware Memory Usage
+
+     Options:
+	-H         Hostname/IP Address
+	-C         Commuity String
+        -w         Warning threshold as percentage (def: 80)
+        -c         Critical threshold as percentage (def: 90)
+
+Sample Usage: $0 -H 10.1.1.1 -C public -w 80 -c 90
+EOF
+}
+
+
+while getopts "H:C:w:c:h" ARG;
+do
+        case $ARG in
+                H) MYHOST=$OPTARG
+                   ;;
+                C) MYSTR=$OPTARG
+                   ;;
+                w) WARN=$OPTARG
+                   ;;
+                c) CRIT=$OPTARG
+                   ;;
+                h) usage
+                   exit
+                   ;;
+        esac
+done
+
+# Check Memory Usage
+
+MYDIRFORTMP=/var/nagiosramdisk/tmp
+if [ -w "$MYDIRFORTMP" ]; then
+  MYOUTMP="$MYDIRFORTMP/$MYHOST-memcheckout"
+  MYOUTMPERR="$MYDIRFORTMP/$MYHOST-memcheckouterr"
+else
+  MYOUTMP="/tmp/$MYHOST-memcheckout"
+  MYOUTMPERR="/tmp/$MYHOST-memcheckouterr"
+fi
+
+memtest=`/bin/snmpwalk -m ALL -v2c -c $MYSTR $MYHOST ciscoMemoryPoolUsed > $MYOUTMPERR`
+echo $memtest > /dev/null
+MYOKNOTERR=$( cat "$MYOUTMPERR" | grep "Gauge" )
+MYRESULTERR=$( cat "$MYOUTMPERR" )
+if [ -z "$MYOKNOTERR" ]; then
+        RESULT="$MYRESULTERR"
+        echo "UNKNOWN: $RESULT"
+        rm -f $MYOUTMPERR
+        exit $UNKNOWN;
+fi
+
+#memnum=`/bin/snmpwalk -m ALL -v2c -c $MYSTR $MYHOST ciscoMemoryPoolUsed | egrep 'Physical Memory|Physical memory|Real Memory|Real memory' | awk '{print $1}' | sed -e "s/^ciscoMemoryPoolUsed.//"`
+
+memfree=`/bin/snmpwalk -m ALL -v2c -c $MYSTR $MYHOST ciscoMemoryPoolFree.1 | awk '{print $4}'`
+
+memused=`/bin/snmpwalk -m ALL -v2c -c $MYSTR $MYHOST ciscoMemoryPoolUsed.1 | awk '{print $4}'`
+
+memtotal=`awk -v v1=$memfree -v v2=$memused 'BEGIN{printf "%0.0f\n", v1+v2}'` 
+
+memusageout=`awk -v vir=$memused -v tot=$memtotal 'BEGIN{printf "%0.0f\n", vir/tot*100}'`
+
+#memusageout=`/bin/snmpwalk -m ALL -v2c -c $MYSTR $MYHOST HOST-RESOURCES-MIB::hrProcessorLoad | awk '{sum+=$4} END {print sum}'|awk '{print $1/"'"$memtotal"'"}' | awk '{printf "%0.0f\n", $1}'`
+
+echo $memusageout 2> $MYOUTMPERR > $MYOUTMP
+
+memusage=`cat "$MYOUTMP"`
+
+# End Checking
+
+RESULT=$(echo "Memory Usage = $memusage% | 'mem usage'=$memusage%;$WARN;$CRIT;")
+
+MYOKNOT=$( cat "$MYOUTMP" )
+MYOKNOTERR=$( cat "$MYOUTMPERR" )
+MYRESULTERR=$( cat "$MYOUTMPERR" )
+if [ ! -z "$MYOKNOTERR" ]; then
+	RESULT="$MYRESULTERR"
+        echo "UNKNOWN: $RESULT"
+        rm -f $MYOUTMP $MYOUTMPERR
+        exit $UNKNOWN;
+fi
+MYRESULT=$( cat "$MYOUTMP" )
+if [ -z "$MYOKNOT" ]; then
+	RESULT="$MYRESULT"
+        echo "UNKNOWN: $RESULT"
+        rm -f $MYOUTMP $MYOUTMPERR
+        exit $UNKNOWN;
+fi
+if [ "$memusage" -gt $CRIT ]; then
+	echo "CRITICAL: $RESULT"
+        rm -f $MYOUTMP $MYOUTMPERR
+	exit $CRITICAL;
+elif [ "$memusage" -gt $WARN ]; then
+	echo "WARNING: $RESULT"
+        rm -f $MYOUTMP $MYOUTMPERR
+	exit $WARNING;
+else
+	echo "OK: $RESULT"
+        rm -f $MYOUTMP $MYOUTMPERR
+	exit $OK;
+fi
+

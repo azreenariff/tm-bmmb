@@ -1,0 +1,98 @@
+#!/bin/bash
+
+# Nagios Exit Codes
+OK=0
+WARNING=1
+CRITICAL=2
+UNKNOWN=3
+
+# set default values for the thresholds
+WARN=80
+CRIT=90
+
+usage()
+{
+cat <<EOF
+
+Check AIX Disk Usage
+
+     Options:
+        -H         Hostname/IP Address
+        -w         Warning threshold as percentage (def: 80)
+        -c         Critical threshold as percentage (def: 90)
+        -d         Disk Mountpoint/Partition
+
+Sample Usage: $0 -H 10.1.1.1 -w 80 -c 90 -d /
+EOF
+}
+
+
+while getopts "H:d:w:c:h" ARG;
+do
+        case $ARG in
+                H) MYHOST=$OPTARG
+                   ;;
+                w) WARN=$OPTARG
+                   ;;
+                c) CRIT=$OPTARG
+                   ;;
+                d) MPT=$OPTARG
+                   ;;
+                h) usage
+                   exit
+                   ;;
+        esac
+done
+
+# Check AIX Disk Usage
+
+mydiskusage1=$( echo "/usr/local/nagios/libexec/check_by_ssh -H ${MYHOST} -o StrictHostKeyChecking=no -C '/home/nagios/libexec/check_disk3 -w ${WARN} -c ${CRIT} -d ${MPT}\$' -t 30 -l nagios -E" | /bin/bash - | sed 's/\$//g' )
+mydiskusage2=$( echo "/usr/local/nagios/libexec/check_by_ssh -H ${MYHOST} -o StrictHostKeyChecking=no -C '/home/nagios/libexec/check_disk3 -w ${WARN} -c ${CRIT} -d ${MPT}\$' -t 30 -l nagios -E" | /bin/bash - 2>&1 )
+mydiskusage=$( echo ${mydiskusage1} | awk '{$1=$2=""; print $0}' )
+
+# End Checking
+
+RESULT=$(echo "${mydiskusage}")
+MYERRESULT=$(echo "${mydiskusage2}")
+myresult=$( echo "$RESULT" | grep "space used" )
+myresultcrit=$( echo "$RESULT" | grep "CRITICAL" )
+myresultwarn=$( echo "$RESULT" | grep "WARNING" )
+myresultok=$( echo "$RESULT" | grep "OK" )
+myresultimeout=$( echo "$RESULT" | grep "timeout" )
+mydiskperc=$( echo "$RESULT" | awk '{print $3}' | cut -d= -f2 | tr -d '%' )
+#echo $RESULT
+
+if [ !  "${mydiskusage1}" ]; then
+  echo "$MYERRESULT"
+  exit $UNKNOWN;
+fi
+
+if [ -z "$myresult" ]; then
+  if [ ! -z "$myresultcrit" ]; then
+    echo "$RESULT"
+    exit $CRITICAL;
+  elif [ ! -z "$myresultwarn" ]; then
+    echo "$RESULT"
+    exit $WARNING;
+  elif [ ! -z "$myresultok" ]; then
+    echo "$RESULT"
+    exit $OK;
+  elif [ ! -z "$myresultimeout" ]; then
+    echo "$RESULT"
+    exit $UNKNOWN;
+  fi
+fi
+
+if [ $mydiskperc -ge $CRIT ]; then
+        echo "CRITICAL: $RESULT"
+        exit $CRITICAL;
+elif [ $mydiskperc -ge $WARN ]; then
+        echo "WARNING: $RESULT"
+        exit $WARNING;
+elif [ $mydiskperc -le $WARN ]; then
+        echo "OK: $RESULT"
+        exit $OK;
+else
+        echo ${mydiskusage2}
+        exit $UNKNOWN;
+fi

@@ -1,0 +1,32 @@
+#!/bin/sh
+#
+# check aix ram usage
+#
+[ $# -ne 2 ] && echo "usage: $0 <warn> <crit>" && exit 3
+
+WARN=$1
+CRIT=$2
+
+RAMUSAGE=`svmon | grep memory | awk '{ print ($3/$2)*100 }'`
+
+if [ ${RAMUSAGE} -ge ${WARN} ] && [ ${RAMUSAGE} -lt ${CRIT} ]; then
+
+	echo "WARN - RAM usage is at ${RAMUSAGE}%"
+	exit 1;
+
+elif [ ${RAMUSAGE} -ge ${CRIT} ]; then
+
+	echo "CRIT - RAM usage is at ${RAMUSAGE}%"
+	exit 2;
+
+elif [ ${RAMUSAGE} -lt ${WARN} ]; then
+
+	echo "OK - RAM usage is at ${RAMUSAGE}%"
+	exit 0;
+
+else
+
+	echo "UNKNOWN - RAM usage"
+	exit 3;
+
+fi

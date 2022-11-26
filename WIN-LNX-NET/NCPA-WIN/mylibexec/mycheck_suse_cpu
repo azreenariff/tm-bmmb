@@ -1,0 +1,62 @@
+#!/bin/bash
+
+# Nagios Exit Codes
+OK=0
+WARNING=1
+CRITICAL=2
+UNKNOWN=3
+
+# set default values for the thresholds
+WARN=80
+CRIT=90
+
+usage()
+{
+cat <<EOF
+
+Check Linux CPU Usage
+
+     Options:
+	-H         Hostname/IP Address
+        -w         Warning threshold as percentage (def: 80)
+        -c         Critical threshold as percentage (def: 90)
+
+Sample Usage: $0 -H 10.1.1.1 -w 80 -c 90
+EOF
+}
+
+
+while getopts "H:w:c:h" ARG;
+do
+        case $ARG in
+                H) MYHOST=$OPTARG
+                   ;;
+                w) WARN=$OPTARG
+                   ;;
+                c) CRIT=$OPTARG
+                   ;;
+                h) usage
+                   exit
+                   ;;
+        esac
+done
+
+# Check CPU Usage
+
+#cpuusage=`/usr/local/nagios/libexec/check_nrpe -n -H $MYHOST -t 30 -c check_me -a '../../../../usr/bin/top -b -n1' | grep "Cpu(s)" | awk '{print $2 + $4}' | awk '{print substr($1, 1, length($1)-2)}'`
+cpuusage=`/usr/local/nagios/libexec/check_nrpe -n -H $MYHOST -t 30 -c check_me -a '../../../../usr/bin/top -b -n1' | grep "Cpu(s)" | awk '{print $2 + $4}' |  awk '{printf "%0.0f\n", $1}'`
+
+# End Checking
+
+RESULT=$(echo "CPU Usage = $cpuusage% | 'cpu usage'=$cpuusage%;$WARN;$CRIT;")
+
+if [ $cpuusage -gt $CRIT ]; then
+        echo "CRITICAL: $RESULT"
+        exit $CRITICAL;
+elif [ $cpuusage -gt $WARN ]; then
+        echo "WARNING: $RESULT"
+        exit $WARNING;
+else
+        echo "OK: $RESULT"
+        exit $OK;
+fi

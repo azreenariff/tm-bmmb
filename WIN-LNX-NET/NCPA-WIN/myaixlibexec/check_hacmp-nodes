@@ -1,0 +1,76 @@
+#!/usr/bin/perl
+#
+#check for at least one active node in the cluster
+#
+
+my $filename = '/usr/es/sbin/cluster/utilities/cllsnode';
+if (! -e $filename) {
+   print("UNKNOWN: Cannot find $filename - no cluster?\n");
+   exit 3;
+}
+
+my $nodecount = 0;
+my $activecount = 0;
+
+
+#get and print nodes on one line
+open (NODES, "/usr/es/sbin/cluster/utilities/cllsnode |grep NODE |") || die("cannot run cllsnode");
+
+while ($line = <NODES>) {
+
+	chomp $line;
+
+	(undef, $tmpnode, undef) = split(/[: \s]+/, $line);
+
+	#set nodelist array
+	$nodelist[$nodecount] = $tmpnode;
+	$nodecount = $nodecount + 1;
+}
+
+close NODES;
+
+#get node status
+foreach $node (@nodelist) {
+
+	open (ACTIVE, "/usr/es/sbin/cluster/utilities/clgetactivenodes -n $node |grep -i $node |") || die("cannot run clgetactivenodes");
+
+	$line = <ACTIVE>;
+
+	chomp $line;
+
+	if ($line =~ /$node/i) {
+
+		if ($exitcode != 2) { $exitcode = 0; }
+
+		$tmpmsg = "$node active";
+	}
+
+	if ($line !~ /$node/i) {
+
+		$exitcode = 2;
+
+		$tmpmsg = "$node down";
+	}
+
+	$msg = $msg." ".$tmpmsg;
+
+	close ACTIVE;
+
+}
+
+$msg=~ s/^ //;
+
+#set message and alert level
+if ($exitcode == 0) {
+
+	printf "OK - $msg\n";
+	exit 0;
+}
+
+elsif ($exitcode == 2) {
+
+	printf "CRITICAL - $msg\n";
+	exit 2;
+}
+
+else { printf "UNKNOWN - plugin not working properly\n" ; exit 3; }

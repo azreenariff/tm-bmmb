@@ -1,0 +1,33 @@
+This plugin check open service events in HMC.
+This plugin connects to HMC using SSH Key, list all open service events and generates a Warning alert if it finds one or more alerts opened. It requires that you define a nagios user in HMC and attach its public SSH key to it.
+
+SETUP:
+------
+
+1.- Login to Nagios Server with nagios user.
+
+2.- Generate a SSH key.
+
+3.- Login to HMC, create a nagios user and attach the public SSH key to it.
+
+4.- Copy the plugin to Nagios Server:
+/usr/local/nagios/libexec/check_hmc_svcevents.sh
+
+5.- Test it:
+/usr/local/nagios/libexec/check_hmc_svcevents.sh -H 192.168.1.100 -K /home/nagios/.ssh/id_rsa
+
+6.- Create a command in nagios:
+define command {
+command_name check_hmc_svcevents
+command_line $USER1$/check_hmc_svcevents.sh -H $HOSTADDRESS$ -K /home/nagios/.ssh/id_rsa
+}
+
+
+Reviews:
+--------
+Works well after minor changebygdksc, February 11, 2019
+The EVENTS variable returned a single line, so changed to enclose RESULTS in double quotes.
+
+Diff:
+
+EVENTS=`echo "$RESULT" | grep "problem_num" | wc -l`

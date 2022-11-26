@@ -1,0 +1,118 @@
+#!/bin/bash
+#
+#   Simple bash script to check Remote Desktop accessibility on a windows machine.
+#   This check need 'freerdp' package to be installed.
+#   V1.03
+#   Written by Dimitar Krastev
+#   14.12.2018
+#
+
+# Icinga exit states
+UNKNOWN_STATE=3
+CRITICAL_STATE=2
+WARNING_STATE=1
+OK_STATE=0
+
+# parsing arguments
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+  key="$1"
+  case $key in
+    -H|--host)
+    HOST="$2"
+    shift
+    shift
+    ;;
+    -P|--port)
+    PORT="$2"
+    shift
+    shift
+    ;;
+    -u|--user)
+    USER="$2"
+    shift
+    shift
+    ;;
+    -p|--password)
+    PASS="$2"
+    shift
+    shift
+    ;;
+    -d|--domain)
+    DOMAIN="$2"
+    shift
+    shift
+    ;;
+    -t|--timeout)
+    TIMEOUT="$2"
+    shift
+    shift
+    ;;
+    *)
+    POSITIONAL+=("$1")
+    shift
+    ;;
+  esac
+done
+
+set -- "${POSITIONAL[@]}"
+
+
+# Set default timeout
+if [ ! $TIMEOUT ] ; then
+    TIMEOUT=10
+fi
+
+# Set port, or use default
+if [ $PORT ] ; then
+    PORT="$PORT"
+else
+    PORT="3389"
+fi
+
+# Append Windows Domain to HOST string
+if [ $DOMAIN ] ; then
+    DOMAIN="@${DOMAIN}"
+fi
+
+# $HOST is mandatory
+if [[ ! $HOST ]]; then
+    printf "\nUsage: $0 -H HOST -P RDP_PORT -u WINDOWS_USER -p WINDOWS_PASSWORD -t TIMEOUT\nNote: HOST, WINDOWS_USER and WINDOWS_PASSWORD are mandatory.\n\n"
+    exit $UNKNOWN_STATE
+fi
+
+
+FREERDP=`whereis xfreerdp | awk '{print $2}'`
+
+if [ ! $FREERDP ]; then
+    echo "This check requires freerdp package to be installed"
+    exit $UNKNOWN_STATE
+fi
+
+COMMAND=`timeout $TIMEOUT $FREERDP --ignore-certificate --authonly -u ${USER}${DOMAIN} -p ${PASS} ${HOST}:${PORT} 2>&1`
+RETVAL=$?
+
+case "$RETVAL" in
+    0)
+	echo "OK: Connected and authenticated successfully."
+	exit $OK_STATE
+    ;;
+    1)
+	echo "WARNING: Can not connect to $HOST on $PORT."
+	exit $WARNING_STATE
+    ;;
+    131)
+	echo "OK: $RETVAL authentication failure."
+	exit $OK_STATE
+    ;;
+    124)
+	echo "WARNING: Timeout connecting $HOST on port $PORT"
+	exit $WARNING_STATE
+    ;;
+    *)
+	echo "UNKNOWN: Error $RETVAL"
+	exit $UNKNOWN_STATE
+    ;;
+esac
+

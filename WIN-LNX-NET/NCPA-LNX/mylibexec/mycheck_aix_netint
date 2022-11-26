@@ -1,0 +1,104 @@
+#!/bin/bash
+
+# Nagios Exit Codes
+OK=0
+WARNING=1
+CRITICAL=2
+UNKNOWN=3
+
+# set default values for the thresholds
+WARN=80
+CRIT=90
+
+status()
+{
+cat <<EOF
+
+Check AIX Network Interfaces
+
+     Options:
+	-H         Hostname/IP Address
+
+Sample Usage: $0 -H 10.1.1.1
+EOF
+}
+
+
+while getopts "H:h" ARG;
+do
+        case $ARG in
+                H) MYHOST=$OPTARG
+                   ;;
+                h) status
+                   exit
+                   ;;
+        esac
+done
+
+# Check Network Interfaces
+
+MYDIRFORTMP=/var/nagiosramdisk/tmp
+if [ -w "$MYDIRFORTMP" ]; then
+  MYOUTMP="$MYDIRFORTMP/$MYHOST-netintcheckout"
+  MYOUTMP1="$MYDIRFORTMP/$MYHOST-netintcheckout1"
+  MYOUTMPERR="$MYDIRFORTMP/$MYHOST-netintcheckouterr"
+  mystatfile="$MYDIRFORTMP/$MYHOST-netintstatfile"
+  myoutfile="$MYDIRFORTMP/$MYHOST-netintoutfile"
+else
+  MYOUTMP="/tmp/$MYHOST-netintcheckout"
+  MYOUTMP1="/tmp/$MYHOST-netintcheckout1"
+  MYOUTMPERR="/tmp/$MYHOST-netintcheckouterr"
+  mystatfile="/tmp/$MYHOST-netintstatfile"
+  myoutfile="/tmp/$MYHOST-netintoutfile"
+fi
+netintstatusout=$( /usr/local/nagios/libexec/check_nrpe -H "$MYHOST" -t 90 -c check_me2 -a 'ifconfig -l' )
+netintstatuschk1=$( /usr/local/nagios/libexec/check_nrpe -H "$MYHOST" -t 90 -c check_me2 -a 'ifconfig "$en"' )
+echo $netintstatusout 2> $MYOUTMPERR > $MYOUTMP
+
+for en in `cat "$MYOUTMP"`; do
+  echo $netintstatuschk1 > $MYOUTMP1
+  netintstatuschk=$( cat "$MYOUTMP1" | grep UP )
+  if [ ! -z "$netintstatuschk" ]; then
+    echo "UP" >> $mystatfile
+    echo -n "$en=UP " >> $myoutfile
+  else
+    echo "DOWN" >> $mystatfile
+    echo -n "$en=DOWN " >> $myoutfile
+  fi
+done
+
+# End Checking
+
+RESULT=$(echo "`cat $myoutfile`")
+
+MYOKNOT=$( cat "$mystatfile" | grep "DOWN" )
+MYOKNOTERR=$( cat "$MYOUTMPERR" )
+MYRESULTERR=$( cat "$MYOUTMPERR" )
+if [ ! -z "$MYOKNOTERR" ]; then
+	RESULT="$MYRESULTERR"
+        echo "UNKNOWN: $RESULT"
+        rm -f $MYOUTMP
+        rm -f $MYOUTMPERR
+        rm -f $mystatfile
+        rm -f $myoutfile
+        exit $UNKNOWN;
+fi
+MYRESULT=$( cat "$myoutfile" )
+if [ -z "$MYOKNOT" ]; then
+	RESULT="$MYRESULT"
+        echo "CRITICAL: $RESULT"
+        rm -f $MYOUTMP
+        rm -f $MYOUTMPERR
+        rm -f $mystatfile
+        rm -f $myoutfile
+        exit $CRITICAL;
+else
+	RESULT="$MYRESULT"
+        echo "OK: $RESULT"
+        rm -f $MYOUTMP
+        rm -f $MYOUTMPERR
+        rm -f $mystatfile
+        rm -f $myoutfile
+        exit $OK;
+fi
+

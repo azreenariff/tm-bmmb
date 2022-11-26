@@ -1,0 +1,34 @@
+Show info about IBM HMC (GPL licence)
+
+usage: ./check_hmc.sh [ -I value -U value -P value -h ]
+
+syntax:
+
+-I --> IP Address
+-U --> User
+-P --> Password
+-C --> Check Type
+DETAILS : show only the global details (without checks)
+ITEMSTATUS : check status of LPARs and SYSTEMs
+LEDSTATUS : show led status
+UPTIMEHMC : UpTime HMC
+UPTIMESYS : UpTime Systems
+DISKHMC : Check Disk usage on HMC
+HWEVENTS : Check hardware events
+CPULPAR : Check cpu utilization
+-A --> Attribute
+DETAILS : nothing
+ITEMSTATUS : Filter, put LPAR or System names separated by comma
+LEDSTATUS : nothing
+UPTIMEHMC : nothing
+UPTIMESYS : nothing
+DISKHMC : nothing
+HWEVENTS : nothing
+CPULPAR : System Name
+
+
+For use it you have to install the plink binary or putty package.
+
+2013 - 07 - 04 : New version with FIX and CPU check
+
+Ivan by www.nagios-it.org

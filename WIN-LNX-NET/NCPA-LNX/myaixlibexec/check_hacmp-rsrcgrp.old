@@ -1,0 +1,72 @@
+#!/usr/bin/perl
+# ------------------------------------------------------------------------------
+#
+#check that each resource is active on one node
+##
+
+my %rgname = ( );
+my $exitcode;
+
+
+open (CLRGINFO, "/usr/sbin/cluster/utilities/clRGinfo -s |") || die("cannot run clRGinfo");
+#open (CLRGINFO, "cat /tmp/rg.out |") || die("cannot  run clRGinfo");
+
+while ($line = <CLRGINFO>) {
+
+	chomp $line;
+
+	($resource, $status, $node, undef) = split(/[:]+/, $line);
+
+	if ($line =~ /ONLINE/i) {
+
+		$rgname{$resource} = 1;
+	}
+
+	if ($rgname{$resource} != 1)  {
+
+		$rgname{$resource} = 0;
+	}
+
+}
+
+close CLRGINFO;
+
+foreach $xrgname ( keys %rgname ) {
+
+	if ($rgname{$xrgname} == 1) {
+
+		if ($exitcode != 2) { $exitcode = 0 };
+		$tmpmsg = "$xrgname: ONLINE";
+		
+	}
+
+	elsif ($rgname{$xrgname} != 1) {
+
+		$exitcode = 2;
+		$tmpmsg = "$xrgname: OFFLINE";
+	}
+
+	$rgmsg = $rgmsg." ".$tmpmsg;
+
+}
+
+$rgmsg=~ s/^ //;
+
+if (($exitcode == 0) && (defined $rgmsg)) {
+
+	printf "OK - all resources online: $rgmsg\n";
+	exit $exitcode;
+
+}
+
+elsif ($exitcode == 2) {
+
+	printf "CRITICAL - one or more resources offline: $rgmsg\n";
+	exit $exitcode;
+}
+
+elsif (! defined $rgmsg) {
+
+	printf "CRITICAL - all cluster managers down\n";
+	exit 2;
+}

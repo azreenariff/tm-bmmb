@@ -1,0 +1,106 @@
+#!/bin/bash
+
+# Nagios Exit Codes
+OK=0
+WARNING=1
+CRITICAL=2
+UNKNOWN=3
+
+# set default values for the thresholds
+WARN=80
+CRIT=90
+
+usage()
+{
+cat <<EOF
+
+Check SNMP CPU Usage
+
+     Options:
+	-H         Hostname/IP Address
+        -w         Warning threshold as percentage (def: 80)
+        -c         Critical threshold as percentage (def: 90)
+
+Sample Usage: $0 -H 10.1.1.1 -C public -w 80 -c 90
+EOF
+}
+
+
+while getopts "H::C:w:c:h" ARG;
+do
+        case $ARG in
+                H) MYHOST=$OPTARG
+                   ;;
+                C) MYSTR=$OPTARG
+                   ;;
+                w) WARN=$OPTARG
+                   ;;
+                c) CRIT=$OPTARG
+                   ;;
+                h) usage
+                   exit
+                   ;;
+        esac
+done
+
+# Check CPU Usage
+
+MYDIRFORTMP=/var/nagiosramdisk/tmp
+if [ -w "$MYDIRFORTMP" ]; then
+  MYOUTMP="$MYDIRFORTMP/$MYHOST-cpucheckout"
+  MYOUTMPERR="$MYDIRFORTMP/$MYHOST-cpucheckouterr"
+else
+  MYOUTMP="/tmp/$MYHOST-cpucheckout"
+  MYOUTMPERR="/tmp/$MYHOST-cpucheckouterr"
+fi
+
+cputest=`/bin/snmpwalk -v2c -On -c $MYSTR $MYHOST 1.3.6.1.4.1.14823.2.2.1.2.1.30.0 > $MYOUTMPERR`
+MYOKNOTERR=$( cat "$MYOUTMPERR" | grep "Gauge" )
+MYRESULTERR=$( cat "$MYOUTMPERR" )
+if [ -z "$MYOKNOTERR" ]; then
+	RESULT="$MYRESULTERR"
+        echo "UNKNOWN: $RESULT"
+        rm -f $MYOUTMPERR
+        exit $UNKNOWN;
+fi
+
+cpuusageout=`/bin/snmpwalk -v2c -On -c $MYSTR $MYHOST 1.3.6.1.4.1.14823.2.2.1.2.1.30.0 | awk '{print $4}'`
+
+echo $cpuusageout 2> $MYOUTMPERR > $MYOUTMP
+
+cpuusage=`cat "$MYOUTMP"`
+
+# End Checking
+
+RESULT=$(echo "CPU Usage = $cpuusage% | 'cpu usage'=$cpuusage%;$WARN;$CRIT;")
+
+MYOKNOT=$( cat "$MYOUTMP" )
+MYOKNOTERR=$( cat "$MYOUTMPERR" )
+MYRESULTERR=$( cat "$MYOUTMPERR" )
+if [ ! -z "$MYOKNOTERR" ]; then
+	RESULT="$MYRESULTERR"
+        echo "UNKNOWN: $RESULT"
+        rm -f $MYOUTMP $MYOUTMPERR
+        exit $UNKNOWN;
+fi
+MYRESULT=$( cat "$MYOUTMP" )
+if [ -z "$MYOKNOT" ]; then
+	RESULT="$MYRESULT"
+        echo "UNKNOWN: $RESULT"
+        rm -f $MYOUTMP $MYOUTMPERR
+        exit $UNKNOWN;
+fi
+if [ "$cpuusage" -gt $CRIT ]; then
+	echo "CRITICAL: $RESULT"
+        rm -f $MYOUTMP $MYOUTMPERR
+	exit $CRITICAL;
+elif [ "$cpuusage" -gt $WARN ]; then
+	echo "WARNING: $RESULT"
+        rm -f $MYOUTMP $MYOUTMPERR
+	exit $WARNING;
+else
+	echo "OK: $RESULT"
+        rm -f $MYOUTMP $MYOUTMPERR
+	exit $OK;
+fi
+

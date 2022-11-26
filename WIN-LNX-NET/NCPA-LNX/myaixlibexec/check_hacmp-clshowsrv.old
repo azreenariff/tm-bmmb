@@ -1,0 +1,65 @@
+#!/bin/ksh
+#
+#check the status each cluster service
+##
+
+clshowsrv="/usr/es/sbin/cluster/utilities/clshowsrv"
+
+#get output from process status
+clcomdES=`${clshowsrv} clcomdES | tail -1`
+clstrmgrES=`${clshowsrv} clstrmgrES | tail -1`
+clinfoES=`${clshowsrv} clinfoES | tail -1`
+
+#evaluate output
+
+if ! echo "${clcomdES}" |grep active > /dev/null 2>&1 ; then
+
+	exitclcomdES=2
+	msgclcomdES="clcomdES down"
+
+else
+	exitclcomdES=0
+	msgclcomdES="clcomdES active"
+
+fi
+
+if ! echo "${clstrmgrES}" |grep active > /dev/null 2>&1 ; then
+
+        exitclstrmgrES=2
+        msgclstrmgrES="clstrmgrES down"
+
+else
+        exitclstrmgrES=0
+        msgclstrmgrES="clstrmgrES active"
+
+fi
+
+if ! echo "${clinfoES}" |grep active > /dev/null 2>&1 ; then
+
+        exitclinfoES=2
+        msgclinfoES="clinfoES down"
+
+else
+        exitclinfoES=0
+        msgclinfoES="clinfoES active"
+
+fi
+
+#set exit code based on any critical status
+
+if [ ${exitclcomdES} -eq 0 ] && [ ${exitclstrmgrES} -eq 0 ] && [ ${exitclinfoES} -eq 0 ]; then
+
+	echo "OK - ${msgclcomdES}, ${msgclstrmgrES}, ${msgclinfoES}"
+	exit 0;
+
+elif [ ${exitclcomdES} -eq 2 ] || [ ${exitclstrmgrES} -eq 2 ] || [ ${exitclinfoES} -eq 2 ]; then
+
+	echo "CRTICAL - ${msgclcomdES}, ${msgclstrmgrES}, ${msgclinfoES}"
+	exit 2;
+
+else
+
+	echo "UNKNOWN - error with check"
+	exit 3;
+
+fi

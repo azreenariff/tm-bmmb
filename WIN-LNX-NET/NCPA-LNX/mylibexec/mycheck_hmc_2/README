@@ -1,0 +1,123 @@
+HMC Plugin Installation
+There are no plugins provided by IBM to monitor HMC and / or Power Systems, but there is a third party plugin [GPL License] developed by Ivan Bergantin:
+
+ 
+
+http://www.bityard.org/blog/_media/2013/11/11/check_hmc.sh
+
+ 
+
+The instructions stated here are adopted from the bityard's blog.  Minor modifications have been made to the script to handle a few error scenarios, and support the latest HMC versions. 
+
+Download the aforementioned script, place it on the Nagios host, and provide permission to execute it.
+
+$ sudo cp /tmp/check_hmc.sh /usr/lib/nagios/plugins/
+$ sudo chmod 755 /usr/lib/nagios/plugins/check_hmc.sh
+
+Perform the following steps to create an SSH key pair between Nagios host and HMCs it will monitor:
+
+1. Create a SSH key for nagios:
+# su - nagios
+$ ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa_hmc
+
+3. Copy the public key from the above generated key to HMC which need to be monitored:
+# scp /home/nagios/.ssh/id_rsa_hmc.pub hscroot@<hmc_ip_address>:~/
+
+4. Log into the HMC and copy the public key to the appropriate location by running the following command:
+$ mkauthkeys -a "`cat id_rsa_hmc.pub`"
+
+The above steps establishes SSH key based authentication between an HMC and the Nagios host.
+
+To verify things are working as expected run the following command from the Nagios host:
+# su - nagios
+$ ssh hscroot@<hmc_ip_address> "lshmc -V"
+
+The above command should run on the specified HMC without asking for a password.
+
+Note: The assumption is that ssh is installed and configured in the Ubuntu Server Edition host, and ssh enabled on the HMC(s).
+ 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+HMC Plugin Setup
+
+The plug-in configuration files are located in the /etc/nagios-plugins/config directory.
+
+1. Create a file named “check_hmc.cfg” in /etc/nagios-plugins/config directory
+
+2. The config file defines the command object types, and you can define various command abstractions here which will inturn be using the check_hmc.sh plugin. For example:
+
+# check HMC rmc processes
+define command {
+       command_name    check_hmc_rmc
+       command_line    $USER1$/check_hmc.sh -H $HOSTADDRESS$ -C rmc -w $ARG1$ -c $ARG2$ -a $ARG3$
+}
+
+# check HMC System Attention LED for physical system
+define command {
+       command_name    check_hmc_ledphys
+       command_line    $USER1$/check_hmc.sh -H $HOSTADDRESS$ -C ledphys
+}
+
+# check HMC serviceable events
+define command {
+        command_name    check_hmc_events
+        command_line    $USER1$/check_hmc.sh -H $HOSTADDRESS$ -C events
+}
+
+3. Define the “host” object type. You need to create or edit /etc/nagios3/conf.d/localhost.cfg file (on some systems this file maybe called localhost_nagios2.cfg) by adding the following entry:
+
+define host {
+    use        generic-host
+    host_name  <hmc hostname>
+    alias      <Alias for HMC hostname>
+    address    <IP Address of HMC>
+}
+“generic-host” is a template. You can specify your own templates as well. The default “generic-host” template is located in “/etc/nagios3/conf.d/generic-host.cfg” (on some systems this file maybe called generic-host_nagios2.cfg)
+
+ 
+
+4. Define the “hostgroup” object type. You need to create or edit /etc/nagios3/hostgroups.cfg (on some systems this file maybe called hostgroups_nagios2.cfg)
+
+define hostgroup {
+    hostgroup_name    HMC
+    alias             Hardware Management Console
+    members           <List of HMC Hostnames>
+}
+
+5. Define the “services” object type. You need to create or edit the /etc/nagios3/conf.d/localhost.cfg file. For example, to monitor the Power system LED status.
+
+    
+    # check_hmc_ledvlpar
+    define service {
+        use                     generic-service
+        hostgroup_name          hmc
+        service_description     Check_SA_LED_physical
+        check_command           check_hmc_ledphys
+    }
+
+“generic-service” is a template. You can specify your own service template as well. The default “generic-service” template is located in “/etc/nagios3/conf.d/generic-service.cfg” (on some systems this file maybe called generic-service_nagios2.cfg)
+ 
+
+Once the above steps are completed, restart Nagios to load the plugin and config changes:
+
+1. Run a configuration check and if successful reload the Nagios process:
+    $ /usr/sbin/nagios3 -v /etc/nagios3/nagios.cfg
+
+2. Reload/Restart the nagios server.
+    $ /etc/init.d/nagios3 reload
+
+Note:
+check_hmc.sh can be modified to perform additional operations. Users can come up with their own scripts and plugins for Nagios to perform additional monitoring / operations. This check plugin is a simple shell script, and users can write this plugin in any programming language like Python, Java, C, etc.,
+
+ 
+
+Monitoring the HMC in Nagios:
+As mentioned earlier, Nagios monitors two types of Object:
+
+Host; HMC is a host in this case
+Service; Services are particular functions associated with a Host. Every Power System entity that we want to monitor will be treated as a service here. For e.g. Attention LED status of a Physical Server or Logical Partition is a service.
+Nagios provides a basic graphical user interface (GUI) through which users can visualize the states of the resources that they are monitoring. The GUI is a Web application and need to be launched from a browser.
+
+Launch "http://<ip address of Nagios server>:port/nagios3 in a web browser
+At the user ID prompt enter "nagiosadmin".  The password is the one provided while installing the Nagios server. 
+
