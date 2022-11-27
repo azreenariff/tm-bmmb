@@ -19,18 +19,21 @@ chmod 755 /usr/local/nagios/libexec/check_mysql_slavestatus.sh
 ```
 
 **3. Add commands into Nagios**
+```
 cp commands.cfg /usr/local/nagios/etc/import/
 /usr/local/nagiosxi/scripts/reconfigure_nagios.sh
-
+```
 
 **4. Add hosts into Nagios**
+
 **_NOTE:_** *For this, it is assumed the host(s) is/are already added. If not, just add them first*
 
 
 **5. Add services into Nagios**
+```
 cp MYSQL-REPLICATION.cfg /usr/local/nagios/etc/import/
 /usr/local/nagiosxi/scripts/reconfigure_nagios.sh
-
+```
 
 **DONE!**
 
