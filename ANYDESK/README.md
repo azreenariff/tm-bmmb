@@ -36,7 +36,7 @@ rpm -qi anydesk
 **Step 5: Install GUI (if it has not been installed)**
 
 ```
-yum groupinstall "Server with GUI"
+dnf -y groupinstall "Server with GUI"
 systemctl set-default graphical
 shutdown -r now
 ```

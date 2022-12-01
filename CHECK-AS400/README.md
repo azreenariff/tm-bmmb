@@ -36,7 +36,13 @@ into your /etc/checkcommands.cfg
 ```
 ----------------------------------------------------------------------------------------
 
-Modify `/usr/local/nagios/libexec/.as400` with the correct user and password
+
+**3. Modify `/usr/local/nagios/libexec/.as400` with the correct `user` and `password`**
+
+```
+vi /usr/local/nagios/libexec/.as400
+```
+- Change the `user` and `password` to correct one accordingly
 
 
 **3. Add commands into Nagios**
@@ -49,6 +55,7 @@ cp commands.cfg /usr/local/nagios/etc/import/
 
 
 **4. Add hosts into Nagios**
+- These hosts configs are already set for TM-BMMB. If not, change them first accordingly
 
 ```
 cd hosts
@@ -59,6 +66,7 @@ cd ..
 
 
 **5. Add services into Nagios**
+- Don't forget to change the host assignments accordingly
 
 ```
 cd services
