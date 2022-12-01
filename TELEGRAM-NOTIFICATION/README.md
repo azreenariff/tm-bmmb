@@ -72,7 +72,7 @@ curl -Lk -i -X GET https://api.telegram.org/bot<API_KEY>/getUpdates
 
 - Next, create a new contact to use this Notification Commands
 
-**NOTE:** This step can be skipped and just import the commands using **Step 5**
+**NOTE:** This step can be skipped and just import the contacts using **Step 5**
 
   - Use the **generic-contact** template 
   - Under `Pager Number`, key-in the user ***CHAT ID***
