@@ -3,6 +3,7 @@ https://www.claudiokuenzler.com/monitoring-plugins/check_mysql_slavestatus.php
 ## Requirements
 - The following shell commands must exist and be executable by your Nagios user: `grep`, `cut`
 - The mysql (client) command must be available *(this command usually comes from the mysql-client or mariadb-client package)*
+- Refer to `DBUserPreparationGuideforNagiosXI.pdf` file for the MySQL user creation requirements
 - The MySQL user you want to use for this plugin needs **REPLICATION CLIENT** privileges.
 
 Here is an example how to grant the necessary privileges to a user nagios:

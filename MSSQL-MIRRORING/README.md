@@ -1,5 +1,7 @@
 https://exchange.nagios.org/directory/Plugins/Databases/SQLServer/Check-MSSQL-Database-Mirroring/details
 
+**NOTE:** For MSSQL user requirements, refer to the PDF file `MonitoringMSSQLwithNagios.pdf`
+
 **1. Install the `nagios-plugins-perl` package**
 ```
 dnf -y install epel-release
