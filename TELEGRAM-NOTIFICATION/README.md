@@ -34,12 +34,13 @@ curl -Lk -i -X GET https://api.telegram.org/bot<API_KEY>/getUpdates
 "message":{"message_id":14,"from":{"id":300920731,"is_bot":false,"first_name":"Your","last_name":"Name","language_code":"en-US"},"chat":{"id":-123456789,"title":"My fancy Telegram group","type":"supergroup"},"date":1520901132,"text":"I like beer"}}]}
 ```
 
-- Copy and save ***chat *** id, which in above example is `-123456789`
-<br />
+- Copy and save ***chat*** id, which in above example is `-123456789`
 
+<br />
 **Step 2 - Configure Nagios XI**
 
 -  Next up we need to configure Nagios to send the notifications via this new telegram bot.
+
 **NOTE:** This step can be skipped and just import the commands using **Step 5**
 
 - For that, we will define two (2) new commands
@@ -68,7 +69,9 @@ curl -Lk -i -X GET https://api.telegram.org/bot<API_KEY>/getUpdates
 - Please **NOTE** that you need to provide your own bot ***API key*** in the command - and you can change the text which is sent to your liking of course.
 
 - Next, create a new contact to use this Notification Commands
+
 **NOTE:** This step can be skipped and just import the commands using **Step 6**
+
   - Use the **generic-contact** template 
   - Under `Pager Number`, key-in the user ***CHAT ID***
 
