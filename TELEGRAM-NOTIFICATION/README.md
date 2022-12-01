@@ -12,7 +12,7 @@
     - The username needs to be unique, so adding a timestamp or at least the day will help. We will name the bot ***NagiosNotification20191219_bot*** for example.
   - Now your bot is almost done and you will get a confirmation from the ***@BotFather***, which will look something like this:
 <br />
-  - Here you will get the URL to the bot and most important your ***API-Key***.
+  - Here you will get the URL to the bot and most important your API-Key.
   - The bot itself is done now.
 <br />
 
@@ -29,6 +29,7 @@ curl -Lk -i -X GET https://api.telegram.org/bot<API_KEY>/getUpdates
 ```
 
     - Output will be something like:
+
 ```
 "message":{"message_id":14,"from":{"id":300920731,"is_bot":false,"first_name":"Your","last_name":"Name","language_code":"en-US"},"chat":{"id":-123456789,"title":"My fancy Telegram group","type":"supergroup"},"date":1520901132,"text":"I like beer"}}]}
 ```
