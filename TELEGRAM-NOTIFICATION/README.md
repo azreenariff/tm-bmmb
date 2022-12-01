@@ -10,9 +10,9 @@
   - Next you will need to provide a username for the bot. It must end in ***bot***, and this will be the ID of the bot *(just like BotFather)*
     - This will make the bot searchable by anyone, so make it something only you know
     - The username needs to be unique, so adding a timestamp or at least the day will help. We will name the bot ***NagiosNotification20191219_bot*** for example.
-  - Now your bot is almost done and you will get a confirmation from the ***@BotFather***, which will look something like this:
-<br />
-  - Here you will get the URL to the bot and most important your API-Key.
+  - Now your bot is almost done and you will get a confirmation from the ***@BotFather***.
+
+  - Here you will get the URL to the bot and most important your ***API-Key***.
   - The bot itself is done now.
 <br />
 
