@@ -43,7 +43,7 @@ curl -Lk -i -X GET https://api.telegram.org/bot<API_KEY>/getUpdates
 
 -  Next up we need to configure Nagios to send the notifications via this new telegram bot.
 
-**NOTE:** This step can be skipped and just import the commands using **Step 5**
+**NOTE:** This step can be skipped and just import the commands using **Step 4**
 
 - For that, we will define two (2) new commands
   - One for the **host** state
@@ -72,7 +72,7 @@ curl -Lk -i -X GET https://api.telegram.org/bot<API_KEY>/getUpdates
 
 - Next, create a new contact to use this Notification Commands
 
-**NOTE:** This step can be skipped and just import the commands using **Step 6**
+**NOTE:** This step can be skipped and just import the commands using **Step 5**
 
   - Use the **generic-contact** template 
   - Under `Pager Number`, key-in the user ***CHAT ID***
@@ -99,6 +99,8 @@ cp commands.cfg /usr/local/nagios/etc/import/
 <br />
 
 **Step 5 - Add contact into Nagios XI**
+
+**NOTE:** Make sure to change the `Pager Number` to the correct one accordingly
 
 ```
 cp contacts.cfg /usr/local/nagios/etc/import/
