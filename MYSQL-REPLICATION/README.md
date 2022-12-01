@@ -26,10 +26,13 @@ cp commands.cfg /usr/local/nagios/etc/import/
 
 **4. Add hosts into Nagios**
 
-**_NOTE:_** *For this, it is assumed the host(s) is/are already added. If not, just add them first*
+**_NOTE:_** *For this, it is assumed the host(s) is/are already added. If not, REMEMBER to add them first*
 
 
 **5. Add services into Nagios**
+- Make sure to change `port`, `username`, `passwd` accordingly
+- Don't forget to change the host assignments accordingly
+
 ```
 cp MYSQL-REPLICATION.cfg /usr/local/nagios/etc/import/
 /usr/local/nagiosxi/scripts/reconfigure_nagios.sh

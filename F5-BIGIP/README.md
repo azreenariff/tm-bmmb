@@ -1,20 +1,4 @@
-**1. If not already installed, install the check_nwc_health plugin**
-
-```
-git clone git@github.com:lausser/check_nwc_health.git
-cd check_nwc_health
-git submodule update --init
-autoreconf
-./configure
-make
-cp plugins-scripts/check_nwc_health /usr/local/nagios/libexec
-chown apache.nagios /usr/local/nagios/libexec/check_nwc_health
-cpan File::Slurp
-cpan JSON::XS
-cd ..
-```
-
-**2. Install the latest check_bigip plugins to `/usr/local/nagios/libexec`**
+**1. Install the latest check_bigip plugins to `/usr/local/nagios/libexec`**
 
 ```
 dnf install -y perl-devel cpan make
@@ -35,7 +19,7 @@ chown apache.nagios /usr/local/nagios/libexec/check_bigip*
 cd ..
 ```
 
-**3. Add commands into Nagios**
+**2. Add commands into Nagios**
 
 ```
 cd config
@@ -44,7 +28,8 @@ cp commands.cfg /usr/local/nagios/etc/import/
 ```
 
 
-**4. Add hosts into Nagios**
+**3. Add hosts into Nagios**
+- These hosts configs are already set for TM-BMMB. If not, change them first accordingly
 
 ```
 cd hosts
@@ -54,7 +39,9 @@ cd ..
 ```
 
 
-**5. Add services into Nagios**
+**4. Add services into Nagios**
+- Make sure to change `mycommunity`, `myswversion`, `mypoolname`, `myvirtualserver` accordingly
+- Don't forget to change the host assignments accordingly
 
 ```
 cd services
@@ -63,7 +50,7 @@ cp *.cfg /usr/local/nagios/etc/import/
 cd ..
 ```
 
-**NOTE:** After this, make sure to change the necessary argument variables as necessary in Nagios XI!
+**NOTE:** Remember to change the necessary argument variables as necessary in Nagios XI!
 
 
 **DONE!**

@@ -72,7 +72,7 @@ cd ..
 
 
 
-**NOTE:** If the console requires `ENTER` to be pressed after login, use customized check_as400
+**_ADDITIONAL NOTE:_** If the console requires `ENTER` to be pressed after login, use customized check_as400
 
 **Perform as below:**
 
