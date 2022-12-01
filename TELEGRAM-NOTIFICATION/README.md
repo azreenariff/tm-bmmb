@@ -14,6 +14,7 @@
 
   - Here you will get the URL to the bot and most important your ***API-Key***.
   - The bot itself is done now.
+
 <br />
 
 - For the bot to know where to send the notifications we need our ***Telegram ID*** or ***Group ID***.
@@ -37,6 +38,7 @@ curl -Lk -i -X GET https://api.telegram.org/bot<API_KEY>/getUpdates
 - Copy and save ***chat*** id, which in above example is `-123456789`
 
 <br />
+
 **Step 2 - Configure Nagios XI**
 
 -  Next up we need to configure Nagios to send the notifications via this new telegram bot.
@@ -76,6 +78,7 @@ curl -Lk -i -X GET https://api.telegram.org/bot<API_KEY>/getUpdates
   - Under `Pager Number`, key-in the user ***CHAT ID***
 
 **NOTE:** Make sure to assign to both the ***Host & Service Notification*** Commands.
+
 <br />
 
 **Step 3 - Telegram Behind a Proxy**
