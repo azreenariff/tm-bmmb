@@ -29,6 +29,7 @@ cp commands.cfg /usr/local/nagios/etc/import/
 
 
 **3. Add hosts into Nagios**
+
 **NOTE:** For TM-BMMB, **SKIP** this. Make sure you do the **SNMP-NETWORK** first under **WIN-LNX-NET**
 
 - These hosts configs are already set for TM-BMMB. If not, change them first accordingly
@@ -56,6 +57,7 @@ cd ..
 
 
 **5. Add hostgroup into Nagios**
+
 **NOTE:** For TM-BMMB, **SKIP** this. Make sure you do the **SNMP-NETWORK** first under **WIN-LNX-NET**
 
 ```
