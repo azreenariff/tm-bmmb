@@ -53,5 +53,13 @@ cd ..
 **NOTE:** Remember to change the necessary argument variables as necessary in Nagios XI!
 
 
+**5. Add hostgroup into Nagios**
+
+```
+cp hostgroups.cfg /usr/local/nagios/etc/import/
+/usr/local/nagiosxi/scripts/reconfigure_nagios.sh
+```
+
+
 **DONE!**
 

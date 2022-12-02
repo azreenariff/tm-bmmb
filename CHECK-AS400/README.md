@@ -76,6 +76,14 @@ cd ..
 ```
 
 
+**6. Add hostgroup into Nagios**
+
+```
+cp hostgroups.cfg /usr/local/nagios/etc/import/
+/usr/local/nagiosxi/scripts/reconfigure_nagios.sh
+```
+
+
 **DONE!**
 
 
