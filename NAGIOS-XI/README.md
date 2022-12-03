@@ -2,7 +2,7 @@
 
 There are two methods for installing Nagios XI, they both perform a full installation.
 
-##Quick
+## Quick
 
 Execute the following command in your terminal session:
 
