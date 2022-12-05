@@ -1,4 +1,4 @@
-# Install Nagios XI
+# Nagios XI Installation
 
 There are two methods for installing Nagios XI, they both perform a full installation.
 
