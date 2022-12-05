@@ -1,3 +1,5 @@
+## Adding Ping Check for All Hosts into Nagios XI
+
 **1. Add the Latency (PING) monitoring into Nagios**
 
 ```
