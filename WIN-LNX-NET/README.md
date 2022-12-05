@@ -1,3 +1,6 @@
+## Adding Windows and Linux NCPA Monitoring into Nagios XI
+## Adding Network Devices SNMP Monitoring into Nagios XI
+
 **1. If not already installed, install the check_nwc_health plugin**
 
 ```
