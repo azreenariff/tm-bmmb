@@ -1,3 +1,5 @@
+## MySQL Replication Plugin Installation and Configuration
+
 https://www.claudiokuenzler.com/monitoring-plugins/check_mysql_slavestatus.php
 
 ## Requirements
