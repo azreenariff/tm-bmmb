@@ -35,7 +35,7 @@ dnf -y install anydesk
 rpm -qi anydesk
 ```
 
-**Step 5: Install GUI (if it has not been installed)**
+**Step 5: Install GUI (if it has not already been installed)**
 
 ```
 dnf -y groupinstall "Server with GUI"
