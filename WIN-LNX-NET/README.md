@@ -4,7 +4,7 @@
 **1. If not already installed, install the check_nwc_health plugin**
 
 ```
-git clone git@github.com:lausser/check_nwc_health.git
+git clone https://github.com/lausser/check_nwc_health.git
 cd check_nwc_health
 git submodule update --init
 autoreconf
